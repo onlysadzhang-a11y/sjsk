@@ -1,1 +1,43 @@
-
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#10131d">
+<title>Soundboard · 音效测试台</title>
+<style>
+:root{color-scheme:dark;--line:#293247;--gold:#e8bd68;--muted:#9ba6ba}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 50% -10%,#273047 0,#111725 45%,#0c0f17 100%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f5f6fa}
+body{padding:24px 16px 34px}.wrap{max-width:720px;margin:auto}header{text-align:center;padding:18px 8px 24px}.eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);font-weight:700}h1{font-size:29px;margin:10px 0 7px}header p{color:var(--muted);font-size:13px;margin:0}
+.panel{background:linear-gradient(145deg,#1a2131,#131927);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 12px 35px #0005}.panel-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;font-weight:700}.status{font-size:11px;color:#9bd8b0;border:1px solid #345c49;background:#193326;padding:5px 9px;border-radius:20px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.sound{min-height:116px;border:1px solid #354158;border-radius:15px;background:linear-gradient(145deg,#222c40,#171e2d);color:#fff;padding:16px 13px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:13px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.sound:active{transform:scale(.975);border-color:var(--gold);background:#30364a}.sound .ico{font-size:22px;color:var(--gold)}.sound strong{font-size:14px}.sound small{font-size:11px;color:var(--muted)}
+.controls{display:flex;gap:10px;flex-wrap:wrap}.action{border:1px solid #46516a;background:#242d40;color:white;border-radius:12px;padding:12px 15px;font-weight:650;min-height:44px;touch-action:manipulation}.action.primary{background:linear-gradient(135deg,#d6a84f,#f0cf83);border:0;color:#211a0d}.volume{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}.volume input{flex:1;accent-color:var(--gold)}.note{color:#8792a7;font-size:11px;line-height:1.6;text-align:center;padding:8px 12px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style></head><body><main class="wrap">
+<header><div class="eyebrow">AUDIO LAB · MOBILE TEST</div><h1>音效播放测试台</h1><p>内置音效 · 轻触播放 · 适配 iPhone Safari</p></header>
+<section class="panel"><div class="panel-title"><span>音效库</span><span class="status" id="status">等待播放</span></div><div class="grid">
+<button class="sound" data-sound="click"><span class="ico">✦</span><span><strong>按钮点击</strong><br><small>清脆短促</small></span></button>
+<button class="sound" data-sound="coin"><span class="ico">◈</span><span><strong>金币掉落</strong><br><small>连续金属音</small></span></button>
+<button class="sound" data-sound="win"><span class="ico">♛</span><span><strong>中奖庆祝</strong><br><small>上扬和弦</small></span></button>
+<button class="sound" data-sound="fail"><span class="ico">⌁</span><span><strong>失败提示</strong><br><small>低沉提示音</small></span></button>
+<button class="sound" data-sound="notice"><span class="ico">◉</span><span><strong>系统通知</strong><br><small>双音提醒</small></span></button>
+<button class="sound" data-sound="bonus"><span class="ico">✧</span><span><strong>特殊奖励</strong><br><small>闪亮上升音阶</small></span></button>
+</div></section><section class="panel"><div class="panel-title"><span>播放控制</span></div><div class="volume"><span>主音量</span><input id="volume" type="range" min="0" max="100" value="65"><b id="volText">65%</b></div><div class="controls" style="margin-top:17px"><button class="action primary" id="demo">连续试听</button><button class="action" id="stop">停止全部</button></div></section>
+<div class="note">首次播放请点击任意音效按钮以启用 iPhone 音频。音效由网页本地合成，不需要下载或连接外部音频文件。</div></main>
+<script>
+(()=>{let ctx=null,master=null,active=[],demoTimer=null,volume=.65;const status=document.getElementById('status');
+function audio(){if(!ctx){const AC=window.AudioContext||window.webkitAudioContext;ctx=new AC();master=ctx.createGain();master.gain.value=volume;master.connect(ctx.destination)}if(ctx.state==='suspended')ctx.resume();return ctx}
+function tone(freq,start,dur,type='sine',gain=.12,endFreq=null){const c=audio(),o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(freq,start);if(endFreq)o.frequency.exponentialRampToValueAtTime(endFreq,start+dur);g.gain.setValueAtTime(.0001,start);g.gain.exponentialRampToValueAtTime(Math.max(.001,gain),start+.012);g.gain.exponentialRampToValueAtTime(.0001,start+dur);o.connect(g);g.connect(master);o.start(start);o.stop(start+dur+.03);active.push(o);o.onended=()=>{active=active.filter(x=>x!==o)}}
+function stopDemoOnly(){if(demoTimer){clearInterval(demoTimer);demoTimer=null}}
+function play(name){stopDemoOnly();const c=audio(),t=c.currentTime+.015;
+if(name==='click')tone(880,t,.075,'triangle',.10,620);
+if(name==='coin')[0,1,2,3].forEach(v=>tone(1250+v*170,t+v*.085,.18,'sine',.09,1750+v*150));
+if(name==='win')[523,659,784,1047].forEach((f,i)=>tone(f,t+i*.13,.48,'sine',.10));
+if(name==='fail'){tone(260,t,.24,'triangle',.12,190);tone(185,t+.19,.38,'sine',.10,140)}
+if(name==='notice'){tone(740,t,.13,'sine',.10);tone(980,t+.16,.2,'sine',.10)}
+if(name==='bonus')[440,554,659,880,1109,1318].forEach((f,i)=>tone(f,t+i*.095,.34,'triangle',.09));
+const names={click:'按钮点击',coin:'金币掉落',win:'中奖庆祝',fail:'失败提示',notice:'系统通知',bonus:'特殊奖励'};status.textContent='正在播放 · '+names[name]}
+function stopAll(){stopDemoOnly();active.forEach(o=>{try{o.stop()}catch(e){}});active=[];status.textContent='已停止'}
+document.querySelectorAll('[data-sound]').forEach(b=>b.addEventListener('click',()=>play(b.dataset.sound)));
+document.getElementById('volume').addEventListener('input',e=>{volume=Number(e.target.value)/100;document.getElementById('volText').textContent=e.target.value+'%';if(master)master.gain.setTargetAtTime(volume,ctx.currentTime,.025)});
+document.getElementById('stop').addEventListener('click',stopAll);
+document.getElementById('demo').addEventListener('click',()=>{stopAll();audio();const seq=['click','coin','notice','win','bonus','fail'];let i=0;play(seq[i++]);demoTimer=setInterval(()=>{if(i>=seq.length){stopDemoOnly();status.textContent='试听完成';return}play(seq[i++])},850)});
+})();
+</script></body></html>
